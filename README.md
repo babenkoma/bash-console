@@ -36,12 +36,16 @@ bash({
 });
 ```
 ## Global options
-### host, user, password - data for remote connection throw ssh
-### groups - groups command, which run lo local or remote server
+### host, user, password 
+data for remote connection throw ssh
+### groups
+groups command, which run lo local or remote server
 
 ## Group options
-### host, user, password - data for remote connection throw ssh. If not set, then used global data
-### commands - array of commands
+### host, user, password 
+data for remote connection throw ssh. If not set, then used global data
+### commands 
+array of commands
 
 ## Detail
 See [tests](https://github.com/babenkoma/bash-console/blob/master/test/index.js)
