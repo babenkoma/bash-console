@@ -1,0 +1,27 @@
+{
+	"name": "bash-console",
+	"version": "1.0.0",
+	"author": "Marina Babenko",
+	"license": "MIT",
+	"description": "Bash console for local and remote commands",
+	"keywords": [
+		"bash",
+		"conaolse",
+		"local console",
+		"remote console",
+		"commands"
+	],
+	"scripts": {
+		"test": "node test/index.js"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/babenkoma/bash-console.git"
+	},
+	"homepage": "https://github.com/babenkoma/bash-console#readme",
+	"main": "index.js",
+	"dependencies": {
+		"sequest": "^0.10.0",
+		"super-co": "^1.0.2"
+	}
+}
