@@ -1,25 +1,37 @@
-const console = require('../index');
+const bash = require('../index');
 
-console({
-	host: '195.201.39.33',
-	user: 'admin',
-	password: 'PctM!A5K?XhLZzT',
+bash({
+	host: '127.0.0.1',
+	user: 'root',
+	password: '',
 	groups: [
 		{
 			type: 'local',
 			commands: [
-				'git status',
-				'git --version'
+				'node --version',
+				'npm --version'
 			]
 		},
 		{
 			type: 'remote',
 			commands: [
-				'cd /home/admin/web/nina-barhat.wezom.agency/public_html',
-				'ls',
-				'git --version'
+				'node --version',
+				'npm --version'
+			]
+		},
+		{
+			type: 'remote',
+			host: '127.0.0.1',
+			user: 'user',
+			password: '',
+			commands: [
+				'node --version',
+				'npm --version'
 			]
 		}
 	]
-
+}).then((data) => {
+	console.log('Do something ...');
+}).catch((error) => {
+	throw new Error(error);
 });

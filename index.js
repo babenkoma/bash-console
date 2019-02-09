@@ -9,34 +9,29 @@
 const exec = require('child_process').exec;
 const sequest = require('sequest');
 const co = require('super-co');
-let remoteCmd = {};
 
-function remoteStart (host, user, password) {
-	if (host && user && password && !remoteCmd[user + '@' + host]) {
-		remoteCmd[user + '@' + host] = sequest(user + '@' + host, {
-			password: password
-		});
-		remoteCmd[user + '@' + host].pipe(process.stdout);
-	}
-}
-
-function remoteFinish () {
-	Object.keys(remoteCmd).forEach((key) => {
-		remoteCmd[key].end();
-	});
-}
-
-function runRemote (command, host, user) {
+/**
+ * Run single or multiple (with &&) command on remote server throw ssh
+ * @param command
+ * @param host
+ * @param user
+ * @param password
+ * @returns {Promise}
+ */
+function runRemote (command, host, user, password) {
 	return new Promise((resolve, reject) => {
 		try {
-			if (remoteCmd[user + '@' + host]) {
-				console.log("\n");
-				console.log(command);
-				console.log('---------------------');
-				remoteCmd[user + '@' + host].write(command, function (error, data) {
+			if (host !== undefined && user !== undefined && password !== undefined) {
+				let remoteCmd = sequest(user + '@' + host, {
+					password: password
+				});
+				remoteCmd.pipe(process.stdout);
+				remoteCmd.write(command, function (error, data) {
 					if (!error) {
+						remoteCmd.end();
 						resolve(data);
 					} else {
+						remoteCmd.end();
 						throw new Error(error);
 					}
 				});
@@ -49,12 +44,18 @@ function runRemote (command, host, user) {
 	});
 }
 
+/**
+ * Run single command on local console
+ * @param command
+ * @returns {Promise}
+ */
 function runLocal (command) {
 	return new Promise((resolve, reject) => {
 		try {
 			console.log("\n");
 			console.log(command);
 			console.log('---------------------');
+
 			let cmdProcess = exec(command, {}, (error, data) => {
 				if (!error) {
 					console.log(data);
@@ -63,6 +64,7 @@ function runLocal (command) {
 					throw new Error(error);
 				}
 			});
+
 			cmdProcess.on('exit', function() {
 				cmdProcess.kill();
 			});
@@ -75,43 +77,35 @@ function runLocal (command) {
 /**
  * Bash console function
  * @param options
+ * @returns {Promise}
  */
 function bashConsole (options) {
-	let run = (i, j) => {
-		return co(function* () {
-			const groups = options.groups || [];
+	return co(function* () {
+		const groups = options.groups || [];
 
-			if (groups.length >= i + 1) {
-				const group = groups[i];
-				const commands = group.commands || [];
-				const host = group.host || options.host;
-				const user = group.user || options.user;
-				const password = group.password || options.password;
+		yield co.forEach(groups, (group) => {
+			const host = group.host || options.host;
+			const user = group.user || options.user;
+			const password = group.password || options.password;
+			const commands = group.commands || [];
 
-				if (commands.length >= j + 1) {
-					const command = commands[j];
-
-					if (group.type === 'local') {
-						yield runLocal(command);
-					} else if (group.type === 'remote') {
-						remoteStart(host, user, password);
-						yield runRemote(command, host, user);
-						console.log(i, j)
-					}
-
-					yield run(i, j + 1);
-				} else {
-					yield run(i + 1, 0);
+			return co(function* () {
+				if (group.type === 'local') {
+					console.log("\n\n*********************\nLocal console\n*********************");
+					yield co.forEach(commands, (command) => {
+						return runLocal(command);
+					});
+				} else if (group.type === 'remote') {
+					let list = [];
+					list.push('echo -e "\n\n*********************\nRemote connection ' + user + '@' + host + '\n*********************"');
+					commands.forEach((command) => {
+						list.push('echo -e "\n\n' + command + '\n---------------------"');
+						list.push(command);
+					});
+					yield runRemote(list.join(' && '), host, user, password);
 				}
-			}
+			});
 		});
-	};
-
-	run(0, 0).then((data) => {
-		remoteFinish();
-	}).catch((error) => {
-		remoteFinish();
-		throw new Error(error);
 	});
 }
 
