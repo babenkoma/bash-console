@@ -32,7 +32,7 @@ bash({
         'npm --version'
       ]
     }
-	]
+  ]
 });
 ```
 ## Global options
